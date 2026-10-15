@@ -58,7 +58,7 @@ class EchoViewModel(private val repository: RecordingRepository, private val tra
     var status by mutableStateOf("Your audio stays encrypted on this device."); private set
     var activeStaging by mutableStateOf<File?>(null); private set
     var playingId by mutableStateOf<String?>(null); private set
-    fun setQuery(value: String) { query = value }
+    fun updateQuery(value: String) { query = value }
     fun start() {
         try { activeStaging = repository.startRecording(); recording = true; status = "Recording…" }
         catch (t: Throwable) { status = "Could not start recording: ${t.message ?: "unknown error"}" }
@@ -105,7 +105,7 @@ class EchoViewModel(private val repository: RecordingRepository, private val tra
                     Text(vm.status, style = MaterialTheme.typography.bodySmall)
                 }
             }
-            OutlinedTextField(value = vm.query, onValueChange = vm::setQuery, modifier = Modifier.fillMaxWidth(), placeholder = { Text("Search recordings and transcripts") }, leadingIcon = { Icon(Icons.Default.Search, null) }, singleLine = true)
+            OutlinedTextField(value = vm.query, onValueChange = vm::updateQuery, modifier = Modifier.fillMaxWidth(), placeholder = { Text("Search recordings and transcripts") }, leadingIcon = { Icon(Icons.Default.Search, null) }, singleLine = true)
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { Text("Your library", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold); Spacer(Modifier.weight(1f)); Text("${filtered.size} items", style = MaterialTheme.typography.labelMedium) }
             if (filtered.isEmpty()) {
                 Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
