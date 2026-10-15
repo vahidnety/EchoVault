@@ -18,7 +18,7 @@ EchoVault explores native audio capture, encrypted local storage, a replaceable 
 ## Current limitations (read before demoing)
 
 - Transcription uses Apple Speech and requires OS authorization and on-device recognition support for the current locale. It fails visibly if local recognition is unavailable; it does not silently fall back to a network service. A private endpoint can be added as a separate provider after a consent and data-handling review.
-- The playback flow decrypts to a temporary file for AVAudioPlayer. The temporary file is removed when playback is stopped or another playback starts; abrupt process termination may leave a temporary file. A production version should use a safer lifecycle strategy and test crash recovery.
+- The playback flow decrypts to a temporary file for AVAudioPlayer. The temporary file is removed when playback finishes, is stopped, or another playback starts; abrupt process termination may still leave a temporary file. A production version should use a safer lifecycle strategy and test crash recovery.
 - The initial version does not implement biometric app locking, background recording guarantees, speaker diarization, remote sync, or a retention scheduler.
 - Metadata is stored in a protected local JSON file but is not independently encrypted. Transcripts can contain sensitive information; production should encrypt metadata too and define backup policy.
 - Audio interruptions and route changes need further explicit handling and device-level testing. The waveform in this starter is illustrative, not a live amplitude visualization.
@@ -50,7 +50,7 @@ xcodebuild test \
   CODE_SIGNING_ALLOWED=NO
 ```
 
-The test target shares the app's Keychain account namespace and app-support directory in a test process. Tests remove their sample encrypted file, but the local test key may remain in Keychain. Use a dedicated test bundle/key namespace for a larger suite.
+Vault unit tests inject an ephemeral in-memory key so simulator CI does not depend on Keychain entitlements. Test artifacts are removed during normal test completion; abrupt test-run termination can leave temporary files in the runner's disposable environment.
 
 ## Repository layout
 
