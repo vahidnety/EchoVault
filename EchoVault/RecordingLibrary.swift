@@ -109,8 +109,12 @@ final class RecordingLibrary: ObservableObject {
             stopPlayback()
             let url = try vault.decryptToTemporaryFile(filename: recording.encryptedFilename)
             let player = try AVAudioPlayer(contentsOf: url)
+            player.delegate = self
             player.prepareToPlay()
-            guard player.play() else { throw EchoVaultError.playbackFailed }
+            guard player.play() else {
+                try? FileManager.default.removeItem(at: url)
+                throw EchoVaultError.playbackFailed
+            }
             playback = player
             playbackTemporaryURL = url
         } catch { errorMessage = error.localizedDescription }
@@ -148,5 +152,15 @@ final class RecordingLibrary: ObservableObject {
     private func persistMetadata() throws {
         let data = try JSONEncoder().encode(recordings)
         try data.write(to: metadataURL, options: [.atomic, .completeFileProtection])
+    }
+}
+
+
+extension RecordingLibrary: AVAudioPlayerDelegate {
+    nonisolated func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        Task { @MainActor [weak self, weak player] in
+            guard let self, let player, self.playback === player else { return }
+            self.stopPlayback()
+        }
     }
 }
