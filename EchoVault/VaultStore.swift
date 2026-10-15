@@ -3,25 +3,26 @@ import CryptoKit
 import Security
 
 /// Encrypts audio blobs with AES-GCM before they are persisted in the vault.
-/// The symmetric key is stored in Keychain; ciphertext is stored in Application Support.
+/// Production uses Keychain-backed keys. Tests can inject an ephemeral key provider.
 final class VaultStore {
     private let fileManager = FileManager.default
     private let folderName = "EchoVault"
     private let keyTag = "com.example.echovault.audio-key.v1"
+    private let injectedKeyProvider: (() throws -> SymmetricKey)?
 
     private var directory: URL {
         let base = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         return base.appendingPathComponent(folderName, isDirectory: true)
     }
 
-    init() {
+    init(keyProvider: (() throws -> SymmetricKey)? = nil) {
+        self.injectedKeyProvider = keyProvider
         try? fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
     }
 
     func saveEncryptedAudio(from plaintextURL: URL, id: UUID) throws -> String {
         let plaintext = try Data(contentsOf: plaintextURL)
-        let key = try encryptionKey()
-        let sealed = try AES.GCM.seal(plaintext, using: key)
+        let sealed = try AES.GCM.seal(plaintext, using: encryptionKey())
         guard let combined = sealed.combined else { throw EchoVaultError.encryptionFailed }
         let filename = "\(id.uuidString).evault"
         let destination = directory.appendingPathComponent(filename)
@@ -46,6 +47,7 @@ final class VaultStore {
     }
 
     private func encryptionKey() throws -> SymmetricKey {
+        if let injectedKeyProvider { return try injectedKeyProvider() }
         if let existing = try readKeyFromKeychain() { return SymmetricKey(data: existing) }
         let key = SymmetricKey(size: .bits256)
         let data = key.withUnsafeBytes { Data($0) }
