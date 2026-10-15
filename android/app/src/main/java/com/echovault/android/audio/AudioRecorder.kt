@@ -2,18 +2,19 @@ package com.echovault.android.audio
 
 import android.content.Context
 import android.media.MediaRecorder
+import android.os.Build
 import java.io.File
 
 class AudioRecorder(context: Context) {
-    private val stagingDir = File(context.cacheDir, "recording-staging").apply { mkdirs() }
+    private val appContext = context.applicationContext
+    private val stagingDir = File(appContext.cacheDir, "recording-staging").apply { mkdirs() }
     private var recorder: MediaRecorder? = null
     private var output: File? = null
     private var startedAt: Long = 0
-
     fun start(): File {
         check(recorder == null) { "A recording is already in progress" }
         val file = File.createTempFile("recording-", ".m4a", stagingDir)
-        val next = if (android.os.Build.VERSION.SDK_INT >= 31) MediaRecorder(file.contextCompatNoop()) else MediaRecorder()
+        val next = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) MediaRecorder(appContext) else MediaRecorder()
         try {
             next.setAudioSource(MediaRecorder.AudioSource.MIC)
             next.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
@@ -35,6 +36,3 @@ class AudioRecorder(context: Context) {
     }
     fun cancel() { runCatching { recorder?.stop() }; runCatching { recorder?.release() }; recorder = null; output?.delete(); output = null }
 }
-
-// Avoid API-specific constructor divergence while keeping a single recording path.
-private fun File.contextCompatNoop(): android.content.Context = throw UnsupportedOperationException("Context required")
