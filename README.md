@@ -46,7 +46,7 @@ Choose an iOS simulator or your signed development device, then run the `EchoVau
 xcodebuild test \
   -project EchoVault.xcodeproj \
   -scheme EchoVault \
-  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  -destination 'platform=iOS Simulator,name=iPhone 17' \
   CODE_SIGNING_ALLOWED=NO
 ```
 
