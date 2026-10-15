@@ -165,7 +165,7 @@ private struct PrivacyView: View {
                 }
                 Section("AI and transcription") {
                     Label("No audio is uploaded by the starter provider", systemImage: "icloud.slash")
-                    Text("Transcription is intentionally unconfigured. Connect an on-device speech recognizer or an approved private endpoint before enabling it.")
+                    Text("Apple Speech transcription is requested only when you choose Transcribe and runs on-device when the device and locale support it. No network fallback is enabled.")
                         .font(.footnote).foregroundStyle(.secondary)
                 }
                 Section("Important limitations") {
