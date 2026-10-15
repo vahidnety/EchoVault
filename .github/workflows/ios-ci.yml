@@ -2,7 +2,14 @@ name: iOS CI
 on:
   push:
     branches: [main, master]
+    paths:
+      - 'iOS/**'
+      - '.github/workflows/ios-ci.yml'
   pull_request:
+    paths:
+      - 'iOS/**'
+      - '.github/workflows/ios-ci.yml'
+  workflow_dispatch:
 
 jobs:
   build-and-test:
@@ -14,8 +21,10 @@ jobs:
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
       - name: Generate Xcode project
+        working-directory: iOS
         run: xcodegen generate
       - name: Build for simulator
+        working-directory: iOS
         run: xcodebuild -project EchoVault.xcodeproj -scheme EchoVault -sdk iphonesimulator -configuration Debug CODE_SIGNING_ALLOWED=NO build
       - name: Ensure iOS simulator runtime is installed
         run: |
@@ -36,4 +45,5 @@ jobs:
           xcrun simctl bootstatus "$DEVICE_ID" -b
           echo "device_id=$DEVICE_ID" >> "$GITHUB_OUTPUT"
       - name: Run unit tests
+        working-directory: iOS
         run: xcodebuild test -project EchoVault.xcodeproj -scheme EchoVault -destination "platform=iOS Simulator,id=${{ steps.simulator.outputs.device_id }}" CODE_SIGNING_ALLOWED=NO
