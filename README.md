@@ -70,7 +70,7 @@ See [`Documentation/ARCHITECTURE.md`](Documentation/ARCHITECTURE.md) and [`Docum
 ## Roadmap
 
 1. Replace illustrative waveform with metering-based visualization and robust audio interruption handling.
-2. Add an `AppleSpeechTranscriptionProvider` using Speech framework authorization and local recognition where supported; make network behavior explicit in UI.
+2. Expand the existing `OnDeviceSpeechTranscriptionProvider` with cancellation, lifecycle management, and device/locale coverage; keep network behavior explicit in UI.
 3. Encrypt metadata and transcript content with a versioned envelope format.
 4. Add biometric gate with `LocalAuthentication`, without treating biometrics as a substitute for file encryption.
 5. Add retention policy, crash-safe temp-file cleanup, and background/foreground lifecycle tests.
