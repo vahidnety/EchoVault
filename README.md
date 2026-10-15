@@ -1,6 +1,6 @@
 # EchoVault — Private Voice Intelligence
 
-**An independent mobile engineering portfolio project. Not affiliated with Cohere.**
+**An independent mobile engineering portfolio project.**
 
 EchoVault explores native audio capture, encrypted local storage, transcription boundaries, and privacy-oriented UX. The repository contains separate native apps for iOS and Android.
 
