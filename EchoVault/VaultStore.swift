@@ -3,7 +3,8 @@ import CryptoKit
 import Security
 
 /// Encrypts audio blobs with AES-GCM before they are persisted in the vault.
-/// Production uses Keychain-backed keys. Tests can inject an ephemeral key provider.
+/// Production uses Keychain-backed keys and complete file protection.
+/// Tests may inject an ephemeral key and use simulator-compatible file writes.
 final class VaultStore {
     private let fileManager = FileManager.default
     private let folderName = "EchoVault"
@@ -15,9 +16,19 @@ final class VaultStore {
         return base.appendingPathComponent(folderName, isDirectory: true)
     }
 
+    /// Supplying a key provider isolates cryptographic tests from Keychain entitlements.
+    /// File-protection attributes are retained in production and omitted only for injected-key tests.
     init(keyProvider: (() throws -> SymmetricKey)? = nil) {
         self.injectedKeyProvider = keyProvider
         try? fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
+    }
+
+    private var secureWriteOptions: Data.WritingOptions {
+        injectedKeyProvider == nil ? [.atomic, .completeFileProtection] : [.atomic]
+    }
+
+    private var temporaryWriteOptions: Data.WritingOptions {
+        injectedKeyProvider == nil ? [.atomic, .completeFileProtectionUnlessOpen] : [.atomic]
     }
 
     func saveEncryptedAudio(from plaintextURL: URL, id: UUID) throws -> String {
@@ -26,7 +37,7 @@ final class VaultStore {
         guard let combined = sealed.combined else { throw EchoVaultError.encryptionFailed }
         let filename = "\(id.uuidString).evault"
         let destination = directory.appendingPathComponent(filename)
-        try combined.write(to: destination, options: [.atomic, .completeFileProtection])
+        try combined.write(to: destination, options: secureWriteOptions)
         return filename
     }
 
@@ -37,7 +48,7 @@ final class VaultStore {
         let box = try AES.GCM.SealedBox(combined: combined)
         let plaintext = try AES.GCM.open(box, using: encryptionKey())
         let tempURL = fileManager.temporaryDirectory.appendingPathComponent("ev-play-\(UUID().uuidString).m4a")
-        try plaintext.write(to: tempURL, options: [.atomic, .completeFileProtectionUnlessOpen])
+        try plaintext.write(to: tempURL, options: temporaryWriteOptions)
         return tempURL
     }
 
