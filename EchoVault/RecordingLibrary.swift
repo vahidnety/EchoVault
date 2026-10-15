@@ -3,7 +3,7 @@ import AVFoundation
 import Combine
 
 @MainActor
-final class RecordingLibrary: ObservableObject {
+final class RecordingLibrary: NSObject, ObservableObject {
     @Published private(set) var recordings: [Recording] = []
     @Published private(set) var isRecording = false
     @Published private(set) var elapsed: TimeInterval = 0
@@ -21,20 +21,12 @@ final class RecordingLibrary: ObservableObject {
 
     init(transcriptionProvider: TranscriptionProvider = OnDeviceSpeechTranscriptionProvider()) {
         self.transcriptionProvider = transcriptionProvider
-        do {
-            let store = VaultStore()
-            self.vault = store
-            let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-                .appendingPathComponent("EchoVault", isDirectory: true)
-            self.metadataURL = base.appendingPathComponent("recordings.json")
-            self.recordings = (try? JSONDecoder().decode([Recording].self, from: Data(contentsOf: metadataURL))) ?? []
-        } catch {
-            // A safe fallback allows the UI to launch; write operations will surface errors.
-            self.vault = VaultStore()
-            self.metadataURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-                .appendingPathComponent("EchoVault/recordings.json")
-            self.errorMessage = error.localizedDescription
-        }
+        self.vault = VaultStore()
+        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("EchoVault", isDirectory: true)
+        self.metadataURL = base.appendingPathComponent("recordings.json")
+        super.init()
+        self.recordings = (try? JSONDecoder().decode([Recording].self, from: Data(contentsOf: metadataURL))) ?? []
     }
 
     func startRecording() async {
@@ -154,7 +146,6 @@ final class RecordingLibrary: ObservableObject {
         try data.write(to: metadataURL, options: [.atomic, .completeFileProtection])
     }
 }
-
 
 extension RecordingLibrary: AVAudioPlayerDelegate {
     nonisolated func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
